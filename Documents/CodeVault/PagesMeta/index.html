@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moracore Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Noto+Sans+Symbols+2&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="overlay"></div>
+    <div id="debug-info"
+        style="position:fixed; bottom:10px; left:10px; color:red; font-family:monospace; font-size:12px; z-index:100; pointer-events:none;">
+    </div>
+
+    <!-- Core Modules (Loaded Sequentially) -->
+    <script src="layout.js"></script>
+    <script src="branding.js"></script>
+    <script src="planet.js"></script>
+    <script src="aether.js"></script>
+    <script src="navigation.js"></script>
+
+    <!-- Main Entry Point -->
+    <script src="app.js"></script>
+
+    <script>
+        console.log("MORACORE: All scripts loaded.");
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            const info = document.getElementById('debug-info');
+            info.innerHTML = `Error: ${msg}<br>At: ${url}:${lineNo}`;
+            return false;
+        };
+    </script>
+</body>
+
+</html>
