@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dissertation Progress</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 40px;
+            box-sizing: border-box;
+        }
+
+        .terminal-window {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            
+            white-space: pre;
+            line-height: 1.3;
+            
+            /* Desktop Default */
+            font-size: 14px; 
+            width: auto;
+            min-width: 650px;
+        }
+
+        #days-display {
+            display: block;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+            font-weight: bold;
+            color: #ff7b72;
+        }
+
+        /* Status Colors */
+        .status-red { color: #ff6347; }
+        .status-yellow { color: #ffd700; }
+        .status-green { color: #009060; }
+
+        /* --- MOBILE SHRINK LOGIC --- */
+        @media (max-width: 650px) {
+            .terminal-window {
+                font-size: 1.9vw; 
+                min-width: 0;
+                width: 98%;
+                padding: 5px;
+                border: none;
+            }
+            body {
+                padding-top: 10px;
+                align-items: flex-start; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal-window">
+<span id="days-display">Calculating Deadline...</span>
+<div id="stats-content"></div>
+Visuals:
+- 2
+  - Backbone
+  - Bond Length / Bond Angle
+  - Torsion Angles Visual
+- Appendix
+  - 20 Amino Acid Type Chart
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const sections = [
+        { name: "Abstract",                    current: 0,    goal: 250,  includeInTotal: true, showBar: true },
+        { name: "", type: "spacer" },
+        { name: "1 Introduction",              current: 622,  goal: 750, includeInTotal: true,  showBar: true },
+        { name: "2 Scientific & Analytical Context", current: 1491, goal: 1500, includeInTotal: true,  showBar: true },
+        { name: "3 Design",                    current: 1565, goal: 1500, includeInTotal: true,  showBar: true },
+        
+        // --- PARENT SECTION ---
+        // INPUT: Enter the intro word count here (currently 132).
+        // OUTPUT: The script will overwrite 'current' and 'goal' with the sum of all subsections.
+        { name: "4 Implementation",            current: 3553,   goal: 3500, includeInTotal: true,  showBar: true },
+        { name: "5 Testing & Evaluation",      current: 1090,    goal: 2000, includeInTotal: true,  showBar: true },
+        { name: "6 Conclusion & Future Work",  current: 0,    goal: 500,  includeInTotal: true,  showBar: true },
+        { name: "7 BCS Criteria & Reflection", current: 0,    goal: 500,  includeInTotal: true,  showBar: true },
+        { name: "", type: "spacer" },
+        { name: "Ethical Compliance (Excl.)",  current: 0,    goal: 200,  includeInTotal: false, showBar: false },
+        { name: "", type: "spacer" },
+        { name: "References",                  current: 0,    goal: 36,   includeInTotal: false, showBar: false }
+    ];
+
+    const deadlineDate = "2025-11-28T17:00:00";
+
+    // --- LOGIC ---
+
+    function getStatusColorClass(current, goal) {
+        if (goal === 0) return 'status-green';
+        const ratio = current / goal;
+        if (ratio < 0.5) return 'status-red';
+        if (ratio < 1.0) return 'status-yellow';
+        return 'status-green';
+    }
+
+    function formatProgressBar(current, goal) {
+        const rawPercent = goal > 0 ? (current / goal) * 100 : 0;
+        const cappedPercent = Math.min(100, rawPercent);
+        const filledLen = Math.floor(cappedPercent / 5);
+        const emptyLen = 20 - filledLen;
+        
+        const bar = "[" + "#".repeat(filledLen) + ".".repeat(emptyLen) + "]";
+        
+        let percentStr = cappedPercent === 0 ? "0%" : cappedPercent.toFixed(1) + "%";
+        percentStr = percentStr.padStart(6, " "); 
+
+        return { percentStr, bar };
+    }
+
+    function generateStats() {
+        let totalWords = 0;
+        let totalGoal = 0;
+        let output = "";
+
+        const nameWidth = 36; 
+        const numWidth = 4;   
+        const gap = "     ";  
+
+        // --- AUTO-CALCULATION LOGIC ---
+        
+        // 1. SYNC INTRO: Move the input from Parent "4 Implementation" to "4.0"
+        sections.forEach(sec => {
+            if (sec.introFor) {
+                const parent = sections.find(p => p.id === sec.introFor);
+                if (parent) {
+                    sec.current = parent.current;
+                }
+            }
+        });
+
+        // 2. AGGREGATE: Sum Current AND Goal for all children
+        const parentAggregates = {};
+
+        sections.forEach(sec => {
+            if (sec.parentId) {
+                if (!parentAggregates[sec.parentId]) {
+                    parentAggregates[sec.parentId] = { current: 0, goal: 0 };
+                }
+                parentAggregates[sec.parentId].current += sec.current;
+                parentAggregates[sec.parentId].goal += sec.goal;
+            }
+        });
+
+        // 3. UPDATE PARENT: Overwrite Parent stats with the aggregated sums
+        sections.forEach(sec => {
+            if (sec.id && parentAggregates[sec.id]) {
+                sec.current = parentAggregates[sec.id].current;
+                sec.goal = parentAggregates[sec.id].goal;
+            }
+        });
+
+        // --- END AUTO-CALCULATION ---
+
+        // 4. Global Totals
+        sections.forEach(sec => {
+            if (sec.includeInTotal) {
+                totalWords += sec.current;
+                totalGoal += sec.goal;
+            }
+        });
+
+        const formatLine = (name, current, goal, showBar, isOverall = false) => {
+            const n = name.padEnd(nameWidth);
+            const c = current.toString().padStart(numWidth);
+            const g = goal.toString().padEnd(numWidth);
+            
+            const colorClass = isOverall ? "" : getStatusColorClass(current, goal);
+            const fractionStr = `${c}/${g}`;
+            const fractionHtml = colorClass ? `<span class="${colorClass}">${fractionStr}</span>` : fractionStr;
+            
+            if (showBar) {
+                const { percentStr, bar } = formatProgressBar(current, goal);
+                const percentHtml = colorClass ? `<span class="${colorClass}">${percentStr}</span>` : percentStr;
+                return `${n} ${fractionHtml}${gap}${percentHtml} ${bar}`;
+            } else {
+                return `${n} ${fractionHtml}`;
+            }
+        };
+
+        // Render Overall
+        output += formatLine("Overall Words vs Goal:", totalWords, totalGoal, true, true) + "\n\n";
+
+        // Render Sections
+        sections.forEach(sec => {
+            if (sec.type === "spacer") {
+                output += "  \n";
+                return;
+            }
+            output += formatLine(sec.name, sec.current, sec.goal, sec.showBar) + "\n";
+        });
+
+        document.getElementById('stats-content').innerHTML = output;
+    }
+
+    function updateTimer() {
+        const deadline = new Date(deadlineDate); 
+        const today = new Date();
+        const timeDiff = deadline.getTime() - today.getTime();
+
+        const displayElement = document.getElementById('days-display');
+        
+        if (timeDiff > 0) {
+            const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hoursLeft = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            displayElement.innerHTML = `DEADLINE COUNTDOWN:           ${daysLeft} DAYS, ${hoursLeft} HOURS REMAINING`;
+        } else {
+            displayElement.innerHTML = `DEADLINE COUNTDOWN:           DEADLINE PASSED`;
+        }
+    }
+
+    // Initialize
+    generateStats();
+    updateTimer();
+    setInterval(updateTimer, 1000 * 60);
+</script>
+
+</body>
+</html>
