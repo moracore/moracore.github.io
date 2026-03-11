@@ -56,7 +56,9 @@
         "volume",
         "network",
         "bluetooth",
+        "updates",
         "battery",
+        "systray",
         "clock"
       ]
     },
@@ -529,5 +531,8 @@
   "theme.font.label": "JetBrainsMono Nerd Font Bold",
   "bar.customModules.storage.paths": [
     "/"
-  ]
+  ],
+  "theme.bar.buttons.modules.microphone.enableBorder": false,
+  "bar.customModules.updates.extendedTooltip": true,
+  "theme.bar.buttons.modules.updates.enableBorder": false
 }

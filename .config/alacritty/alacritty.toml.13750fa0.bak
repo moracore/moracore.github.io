@@ -53,8 +53,3 @@ y = 4
 # This explicitly tells Alacritty to launch Zsh instead of the default shell.
 [terminal.shell]
 program = "/usr/bin/zsh"
-
-[[keyboard.bindings]]
-key = "Return"
-mods = "Shift"
-chars = "\u001B\r"
